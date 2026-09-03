@@ -1,0 +1,6 @@
+{
+  "name": "Управление сотрудниками и направлениями",
+  "description": "Система визуального управления сотрудниками, строительными направлениями и связями с Drag & Drop",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
