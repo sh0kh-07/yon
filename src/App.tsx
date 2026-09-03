@@ -17,6 +17,7 @@ import {
   resetToDemoData,
   clearAllData,
   generateId,
+  exportDataToJson,
 } from './utils/storage';
 import { Navbar } from './components/Navbar';
 import { StatsCards } from './components/StatsCards';
@@ -29,6 +30,7 @@ import { EmployeeModal } from './components/EmployeeModal';
 import { DirectionModal } from './components/DirectionModal';
 import { ConfirmModal } from './components/ConfirmModal';
 import { QuickAssignModal } from './components/QuickAssignModal';
+import { DataBackupModal } from './components/DataBackupModal';
 import { Toast } from './components/Toast';
 
 export default function App() {
@@ -78,6 +80,7 @@ export default function App() {
   const [editingDirection, setEditingDirection] = useState<Direction | null>(null);
 
   const [quickAssignEmployee, setQuickAssignEmployee] = useState<Employee | null>(null);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
 
   const [confirmModalConfig, setConfirmModalConfig] = useState<{
     isOpen: boolean;
@@ -427,6 +430,62 @@ export default function App() {
     addToast('Порядок сохранен', 'Новый порядок направлений записан', 'info');
   };
 
+  // Data Copy & Backup Handlers
+  const handleCopyDataToClipboard = useCallback(async () => {
+    try {
+      const jsonString = exportDataToJson(employees, directions);
+      await navigator.clipboard.writeText(jsonString);
+      addToast(
+        'Данные скопированы!',
+        'Все сотрудники и строительные направления скопированы в буфер обмена.',
+        'success'
+      );
+    } catch {
+      try {
+        const jsonString = exportDataToJson(employees, directions);
+        const textArea = document.createElement('textarea');
+        textArea.value = jsonString;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        addToast(
+          'Данные скопированы!',
+          'Все сотрудники и строительные направления скопированы в буфер обмена.',
+          'success'
+        );
+      } catch {
+        setIsBackupModalOpen(true);
+      }
+    }
+  }, [employees, directions, addToast]);
+
+  const handleDownloadJsonFile = useCallback(() => {
+    const jsonString = exportDataToJson(employees, directions);
+    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const timestamp = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `construction_data_${timestamp}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    addToast('Файл скачан', `Файл construction_data_${timestamp}.json успешно сохранен.`, 'info');
+  }, [employees, directions, addToast]);
+
+  const handleApplyImportedData = useCallback(
+    (newEmployees: Employee[], newDirections: Direction[]) => {
+      setEmployees(newEmployees);
+      setDirections(newDirections);
+      saveEmployees(newEmployees);
+      saveDirections(newDirections);
+      setSelectedDirectionFilter(null);
+    },
+    []
+  );
+
   // Filtered employees for SearchAndFilter
   const filteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
@@ -481,8 +540,9 @@ export default function App() {
           setEditingDirection(null);
           setIsDirectionModalOpen(true);
         }}
-        onResetDemo={handleResetToDemo}
-        onClearAll={handleClearAll}
+        onCopyData={handleCopyDataToClipboard}
+        onOpenBackupModal={() => setIsBackupModalOpen(true)}
+        onDownloadJson={handleDownloadJsonFile}
         isFullscreen={isFullscreen}
         onToggleFullscreen={handleToggleFullscreen}
       />
@@ -664,6 +724,15 @@ export default function App() {
         onConfirm={confirmModalConfig.onConfirm}
         onCancel={() => setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }))}
         isDangerous={confirmModalConfig.isDangerous}
+      />
+
+      <DataBackupModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
+        employees={employees}
+        directions={directions}
+        onApplyImportedData={handleApplyImportedData}
+        onShowToast={(title, msg, type) => addToast(title, msg, type)}
       />
 
       {/* Floating Toast Notifications */}

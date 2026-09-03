@@ -5,12 +5,14 @@ import {
   Users,
   Layers,
   Table2,
-  RotateCcw,
-  Trash2,
   MoreVertical,
   Building2,
   Maximize2,
   Minimize2,
+  Copy,
+  ClipboardPaste,
+  Download,
+  Database,
 } from 'lucide-react';
 import { ViewMode } from '../types';
 
@@ -19,8 +21,9 @@ interface NavbarProps {
   onViewModeChange: (mode: ViewMode) => void;
   onAddEmployee: () => void;
   onAddDirection: () => void;
-  onResetDemo: () => void;
-  onClearAll: () => void;
+  onCopyData: () => void;
+  onOpenBackupModal: () => void;
+  onDownloadJson: () => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
 }
@@ -30,8 +33,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onViewModeChange,
   onAddEmployee,
   onAddDirection,
-  onResetDemo,
-  onClearAll,
+  onCopyData,
+  onOpenBackupModal,
+  onDownloadJson,
   isFullscreen = false,
   onToggleFullscreen,
 }) => {
@@ -103,15 +107,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* Quick Reset Data Button */}
+            {/* Copy Data button */}
             <button
               type="button"
-              onClick={onResetDemo}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#121212] hover:bg-white/5 border border-white/10 text-white/70 hover:text-white font-medium text-xs transition-all active:scale-95 cursor-pointer"
-              title="Обнулить все данные к чистому начальному состоянию с уникальными направлениями"
+              onClick={onCopyData}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#121212] hover:bg-white/5 border border-white/10 text-white/80 hover:text-white font-medium text-xs transition-all active:scale-95 cursor-pointer"
+              title="Скопировать все данные (JSON) в буфер обмена для сохранения или переноса"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-sky-400" />
-              <span className="hidden sm:inline">Обнулить данные</span>
+              <Copy className="w-3.5 h-3.5 text-[#F27D26]" />
+              <span className="hidden sm:inline">Копировать данные</span>
+            </button>
+
+            {/* Paste & Import File button */}
+            <button
+              type="button"
+              onClick={onOpenBackupModal}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#121212] hover:bg-white/5 border border-white/10 text-white/80 hover:text-white font-medium text-xs transition-all active:scale-95 cursor-pointer"
+              title="Вставить скопированные данные или загрузить файл с сохранением в LocalStorage"
+            >
+              <ClipboardPaste className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Вставить / Файл</span>
             </button>
 
             <button
@@ -132,43 +147,54 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Добавить направление</span>
             </button>
 
-            {/* Extra Menu for reset/clear */}
+            {/* Extra Menu for data file options */}
             <div className="relative" ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-2 rounded-xl bg-[#121212] hover:bg-white/5 border border-white/10 text-white/40 hover:text-white/80 transition-colors cursor-pointer"
-                title="Опции данных"
+                title="Опции данных и файлов"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
 
               {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#121212] border border-white/10 shadow-2xl py-1.5 z-40 text-xs">
+                <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#121212] border border-white/10 shadow-2xl py-1.5 z-40 text-xs">
                   <div className="px-3 py-1.5 text-[11px] font-semibold text-white/40 uppercase tracking-wider border-b border-white/5 mb-1">
-                    Управление данными
+                    Файлы и синхронизация
                   </div>
                   <button
                     type="button"
                     onClick={() => {
                       setIsMenuOpen(false);
-                      onResetDemo();
+                      onCopyData();
                     }}
-                    className="w-full px-3 py-2 text-left flex items-center gap-2 text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                    className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-white/80 hover:bg-white/5 hover:text-white transition-colors cursor-pointer"
                   >
-                    <RotateCcw className="w-3.5 h-3.5 text-sky-400" />
-                    <span>Сбросить к демо-данным</span>
+                    <Copy className="w-3.5 h-3.5 text-[#F27D26]" />
+                    <span>Скопировать данные (JSON)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setIsMenuOpen(false);
-                      onClearAll();
+                      onDownloadJson();
                     }}
-                    className="w-full px-3 py-2 text-left flex items-center gap-2 text-rose-400 hover:bg-rose-950/30 transition-colors"
+                    className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-white/80 hover:bg-white/5 hover:text-white transition-colors cursor-pointer"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Очистить все данные</span>
+                    <Download className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Скачать файл (.json)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenBackupModal();
+                    }}
+                    className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-white/80 hover:bg-white/5 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <ClipboardPaste className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Вставить / Загрузить файл...</span>
                   </button>
                 </div>
               )}
